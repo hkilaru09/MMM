@@ -13,3 +13,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = ["slow: fits Bayesian models (run with: pytest -m slow)"]
