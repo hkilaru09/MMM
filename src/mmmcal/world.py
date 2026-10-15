@@ -51,7 +51,7 @@ def random_world(seed):
     return simulate(seed, sample_params(seed))
 
 N_TRAIN = 156
-N_EXTRA = 4          # weeks after training reserved for the geo-lift test window
+N_EXTRA = 8          # weeks after training reserved for the geo-lift test window
 BUFFER = 8           # extra weeks generated so lead/lag shifts don't wrap
 
 

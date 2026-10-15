@@ -9,13 +9,17 @@ from .world import CHANNELS, N_EXTRA, N_TRAIN, adstock, hill
 REGION_SHARES = np.array([0.22, 0.16, 0.13, 0.11, 0.09, 0.08, 0.07, 0.06, 0.05, 0.03])
 REGION_NOISE_SD = 0.04      # weekly multiplicative noise per region
 PRE_WEEKS = 8
+# A switch-off test runs for N_EXTRA (8) weeks but only the last 4 are analysed: with geometric adstock the effect
+# of a cut takes several weeks to develop fully (a channel with decay 0.6 shows only ~40% of its steady-state
+# effect in week 1), so the first weeks are a washout.
+DEFAULT_WASHOUT = 4
 
 # Each channel's test is run in different weeks/regions in practice, so its measurement error is
 # independent of the others. (Social's offset is 0.)
 CHANNEL_SEED_OFFSET = {"TV": 101, "Search": 202, "Social": 0, "Display": 303, "Email": 404}
 
 
-def run_geo_test(world, channel="Social", seed=7, change=-1.0, washout=0, noise_sd=REGION_NOISE_SD):
+def run_geo_test(world, channel="Social", seed=7, change=-1.0, washout=DEFAULT_WASHOUT, noise_sd=REGION_NOISE_SD):
     """Simulate a geo-lift test on `channel` in the weeks after the training data.
 
     Regions are paired by size and randomised within pairs; treated regions get their spend multiplied
