@@ -15,6 +15,41 @@ REFERENCE_PARAMS = {
     "Display": dict(alpha=0.40, k_mult=1.3, shape=1.0, roi=0.8, base=12_000, gamma=1.0, theta=1.5, flight=1.0),
     "Email":   dict(alpha=0.10, k_mult=0.6, shape=1.0, roi=6.0, base=5_000, gamma=0.1, theta=0.3, flight=0.0),
 }
+
+# --- Randomised worlds -------------------------------------------------------------------------------
+# Each world draws its channels' true adstock decay, saturation and ROI from these ranges, so "robust across
+# worlds" means robust to different markets, not just different noise. The status quo is deliberately
+# misallocated: planners over-weight Display (low ROI) and under-weight Search and Email (high ROI), which
+# leaves roughly 12-21% of achievable incremental sales on the table under the halve/double planning rule.
+# These ranges and base spends were chosen by looking only at the TRUE response curves (the resulting
+# headroom), before any model was fitted.
+PARAM_RANGES = {
+    "TV":      dict(alpha=(0.45, 0.75), k_mult=(1.0, 1.6), shape=(1.2, 2.0), roi=(1.0, 2.0), gamma=1.2, theta=1.5, flight=0.0),
+    "Search":  dict(alpha=(0.00, 0.20), k_mult=(0.8, 1.4), shape=(1.0, 1.0), roi=(3.0, 5.0), gamma=0.5, theta=3.0, flight=0.0),
+    "Social":  dict(alpha=(0.20, 0.40), k_mult=(1.2, 1.8), shape=(1.0, 1.0), roi=(1.5, 2.5), gamma=0.7, theta=2.0, flight=1.0),
+    "Display": dict(alpha=(0.30, 0.50), k_mult=(1.0, 1.6), shape=(1.0, 1.0), roi=(0.3, 0.8), gamma=1.0, theta=1.5, flight=1.0),
+    "Email":   dict(alpha=(0.00, 0.20), k_mult=(0.8, 1.4), shape=(1.0, 1.0), roi=(5.0, 10.0), gamma=0.1, theta=0.3, flight=0.0),
+}
+STATUS_QUO_BASE_SPEND = {"TV": 20_000, "Search": 5_000, "Social": 11_000, "Display": 34_000, "Email": 3_000}
+
+
+def sample_params(seed):
+    """Draw one world's true channel parameters (independent of the seed that drives the noise)."""
+    rng = np.random.default_rng(10_000 + seed)
+    out = {}
+    for c, r in PARAM_RANGES.items():
+        u = lambda ab: float(rng.uniform(*ab))
+        out[c] = dict(alpha=u(r["alpha"]), k_mult=u(r["k_mult"]), shape=u(r["shape"]), roi=u(r["roi"]),
+                      base=STATUS_QUO_BASE_SPEND[c] * float(rng.uniform(0.85, 1.15)),
+                      gamma=r["gamma"] * float(rng.uniform(0.75, 1.25)),
+                      theta=r["theta"] * float(rng.uniform(0.75, 1.25)),
+                      flight=r["flight"])
+    return out
+
+
+def random_world(seed):
+    return simulate(seed, sample_params(seed))
+
 N_TRAIN = 156
 N_EXTRA = 4          # weeks after training reserved for the geo-lift test window
 BUFFER = 8           # extra weeks generated so lead/lag shifts don't wrap

@@ -1,7 +1,7 @@
 import numpy as np
 
 from mmmcal.budget import HI_MULT, LO_MULT, WEEKLY_BUDGET, current_mix_weekly, headroom, linear_fn, optimise, true_fn
-from mmmcal.world import CHANNELS, N_TRAIN, simulate, true_quarter_sales
+from mmmcal.world import CHANNELS, N_TRAIN, random_world, simulate, true_quarter_sales
 
 
 def _setup(seed=1):
@@ -36,3 +36,16 @@ def test_a_linear_model_goes_to_the_corners():
     best = optimise(linear_fn(roi), cur)
     assert np.isclose(best["Search"], HI_MULT * cur["Search"], rtol=1e-4)
     assert np.isclose(best["Display"], LO_MULT * cur["Display"], rtol=1e-4)
+
+
+def test_random_worlds_have_a_misallocated_status_quo_with_real_headroom():
+    for seed in range(1, 9):
+        w = random_world(seed)
+        h = headroom(w, w["df"].iloc[:N_TRAIN])
+        assert 0.05 <= h <= 0.35, (seed, h)     # the optimiser has room to win, but not an absurd amount
+
+
+def test_status_quo_overspends_the_low_roi_channel():
+    w = random_world(3)
+    cur = current_mix_weekly(w["df"].iloc[:N_TRAIN])
+    assert cur["Display"] > 2 * cur["Email"] and cur["Display"] > cur["Search"]
