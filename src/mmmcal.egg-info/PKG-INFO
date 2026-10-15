@@ -1,5 +1,0 @@
-Metadata-Version: 2.4
-Name: mmmcal
-Version: 0.1.0
-Summary: Calibrating a Bayesian media mix model with geo-lift experiments
-Requires-Python: >=3.10
