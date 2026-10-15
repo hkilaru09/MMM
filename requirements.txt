@@ -1,0 +1,10 @@
+numpy>=1.26
+pandas>=2.1
+scipy>=1.17
+scikit-learn>=1.2
+matplotlib>=3.8
+seaborn>=0.13
+tabulate>=0.9
+pymc-marketing>=0.19
+jupyter>=1.0
+nbconvert>=7.0
