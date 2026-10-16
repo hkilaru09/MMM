@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import gc
+import hashlib
 from pathlib import Path
 
 import arviz as az
@@ -11,6 +12,11 @@ import pandas as pd
 from .world import CHANNELS, N_TRAIN
 
 CTRL = ["trend", "black_friday", "christmas", "summer_sale"]
+try:
+    from importlib.metadata import version as _v
+    PYMC_MARKETING_VERSION = _v("pymc-marketing")
+except Exception:  # pragma: no cover
+    PYMC_MARKETING_VERSION = "unknown"
 # Measured on one world (seed 1): tune 800 / ta 0.95 gave 53 divergences (logistic) and 378 divergences with R-hat 1.25 (Hill);
 # tune 2000 / draws 1000 / ta 0.98 gave 8 (R-hat 1.00) and 10 (R-hat 1.02). The stronger setting costs ~3x the sampling time.
 SAMPLER = dict(chains=4, cores=2, draws=1000, tune=2000, target_accept=0.98)
@@ -83,8 +89,14 @@ def get_model(name, seed, world, lift_tests=None, informed_priors=False, extra_c
     from pymc_marketing.prior import Prior
 
     cache_dir = Path(cache_dir); cache_dir.mkdir(exist_ok=True)
-    path = cache_dir / f"{name}_seed{seed}.nc"
     d, X, y = training_frame(world, extra_controls)
+    # The cache key fingerprints everything that determines the posterior, so a stale file can never be loaded for a
+    # different world, test, prior or sampler setting that happens to share a name and seed.
+    key = hashlib.sha1(repr((
+        X.to_csv(), y.to_csv(), None if lift_tests is None else lift_tests.round(6).to_csv(), informed_priors,
+        tuple(extra_controls), saturation, roi_prior, sorted((sampler or SAMPLER).items()), seed, PYMC_MARKETING_VERSION,
+    )).encode()).hexdigest()[:10]
+    path = cache_dir / f"{name}_seed{seed}_{key}.nc"
     cfg = None
     if informed_priors:   # spend-share-scaled HalfNormal on saturation_beta
         share = d[CHANNELS].sum() / d[CHANNELS].sum().sum()

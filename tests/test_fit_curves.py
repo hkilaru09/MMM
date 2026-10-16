@@ -29,3 +29,13 @@ def test_roi_prior_pulls_roi_estimates_toward_its_median(tmp_path):
     tight = get_model("tight", 1, w, roi_prior=(2.0, 0.25), cache_dir=tmp_path, sampler=TINY)
     dist = lambda S: np.abs(np.log(S["roi"].mean() / 2.0)).mean()
     assert dist(tight) < dist(free)
+
+
+@pytest.mark.slow
+def test_cache_is_keyed_on_the_data_not_just_name_and_seed(tmp_path):
+    a, b = random_world(1), random_world(2)
+    get_model("m", 1, a, cache_dir=tmp_path, sampler=TINY)
+    get_model("m", 1, a, cache_dir=tmp_path, sampler=TINY)          # same inputs: cache hit, no new file
+    assert len(list(tmp_path.glob("m_seed1_*.nc"))) == 1
+    get_model("m", 1, b, cache_dir=tmp_path, sampler=TINY)          # different world, same name+seed: must NOT reuse
+    assert len(list(tmp_path.glob("m_seed1_*.nc"))) == 2
