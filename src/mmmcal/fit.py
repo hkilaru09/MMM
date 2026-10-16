@@ -11,7 +11,9 @@ import pandas as pd
 from .world import CHANNELS, N_TRAIN
 
 CTRL = ["trend", "black_friday", "christmas", "summer_sale"]
-SAMPLER = dict(chains=4, cores=2, draws=800, tune=800, target_accept=0.95)
+# Measured on one world (seed 1): tune 800 / ta 0.95 gave 53 divergences (logistic) and 378 divergences with R-hat 1.25 (Hill);
+# tune 2000 / draws 1000 / ta 0.98 gave 8 (R-hat 1.00) and 10 (R-hat 1.02). The stronger setting costs ~3x the sampling time.
+SAMPLER = dict(chains=4, cores=2, draws=1000, tune=2000, target_accept=0.98)
 
 
 def training_frame(world, extra_controls=()):
