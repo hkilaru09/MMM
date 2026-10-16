@@ -44,16 +44,25 @@ def fit_core(seed, world=None, **kw):
     return out
 
 
-def fit_variants(seed, world=None, **kw):
-    """Diagnostic variants: Hill curves, ROI prior, both, plus calibration on top, and an oracle confounder control."""
+VARIANT_SPECS = {
+    "H": dict(saturation="hill"),                                   # Hill curves (the family the truth uses)
+    "R": dict(roi_prior=ROI_PRIOR),                                 # ROI-style prior against over-attribution
+    "HR": dict(saturation="hill", roi_prior=ROI_PRIOR),
+    "HE": dict(saturation="hill", tests="all"),                     # Hill + off-tests on all channels
+    "HRE": dict(saturation="hill", roi_prior=ROI_PRIOR, tests="all"),
+    "OC": dict(extra_controls=("u",)),                              # oracle: hand the model the unobserved demand shock
+}
+
+
+def fit_variants(seed, world=None, only=None, **kw):
+    """Diagnostic variants (see VARIANT_SPECS). `only` restricts to a subset of keys."""
     w = world or random_world(seed)
     off, _ = all_tests(seed, w)
     all5 = concat_tests(*CHANNELS, tests=off)
-    return {
-        "H": get_model("H", seed, w, saturation="hill", **kw),
-        "R": get_model("R", seed, w, roi_prior=ROI_PRIOR, **kw),
-        "HR": get_model("HR", seed, w, saturation="hill", roi_prior=ROI_PRIOR, **kw),
-        "HE": get_model("HE", seed, w, saturation="hill", lift_tests=all5, **kw),
-        "HRE": get_model("HRE", seed, w, saturation="hill", roi_prior=ROI_PRIOR, lift_tests=all5, **kw),
-        "OC": get_model("OC", seed, w, extra_controls=("u",), **kw),
-    }
+    out = {}
+    for key in (only or VARIANT_SPECS):
+        spec = dict(VARIANT_SPECS[key])
+        if spec.pop("tests", None) == "all":
+            spec["lift_tests"] = all5
+        out[key] = get_model(key, seed, w, **spec, **kw)
+    return out
