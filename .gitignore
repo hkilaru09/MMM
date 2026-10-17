@@ -5,3 +5,7 @@ cache/
 .DS_Store
 *.egg-info/
 .pytest_cache/
+fit_*.log
+*.pid
+run_notebook.log
+_scratch*
