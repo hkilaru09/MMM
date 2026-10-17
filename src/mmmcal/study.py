@@ -9,6 +9,7 @@ from .world import CHANNELS, N_TRAIN, random_world
 
 MAIN_SEED = 1                          # the worked example; the pipeline was developed on it
 ROBUST_SEEDS = [11, 12, 13, 14, 15, 16]  # fresh worlds, never used while developing
+ROBUST_EXTRA = ["R", "HE", "HRE"]       # variants added to the fresh worlds, chosen from the main-world results
 ROI_PRIOR = (2.0, 0.75)                # weakly informative: median ROI 2, 95% range about 0.5-8.7 (same for every channel)
 
 
